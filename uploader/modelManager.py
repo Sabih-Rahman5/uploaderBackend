@@ -1,6 +1,6 @@
-# import DeepSeek
-# import Llama
-# import Gemma
+from .DeepSeek import DeepSeek
+from .Llama import Llama
+from .Gemma import Gemma
 from threading import Lock  
 import torch
 
