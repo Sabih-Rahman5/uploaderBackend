@@ -10,7 +10,7 @@ import PyPDF2
 from django.shortcuts import get_object_or_404
 from .modelManager import GPUModelManager
 import time
-
+import utils
 
 class UploadAssignment(APIView):
     def post(self, request):
@@ -69,15 +69,16 @@ class RunModel(APIView):
         model_name = request.data.get('selected_model', None)
         if model_name:
             print(f"RunModel called with: {model_name}")
+            modelManager = GPUModelManager.getInstance()
             # Simulate a long-running task
-            for i in range(10):  # Simulate a task with 10 steps
-                time.sleep(1)  # Simulate model loading time
-                # Normally, you'd load the model here, e.g. modelManager.loadModel(model_name)
-                print(f"Loading {model_name}... {i*10}% complete")
+            modelManager.loadModel(model_name)
+            # for i in range(10):  # Simulate a task with 10 steps
+            #     time.sleep(1)  # Simulate model loading time
+            #     # Normally, you'd load the model here, e.g. modelManager.loadModel(model_name)
+            #     print(f"Loading {model_name}... {i*10}% complete")
 
             return Response({"message": "Item printed successfully"}, status=status.HTTP_200_OK)
-            
-            return Response({"message": "Item printed successfully"}, status=status.HTTP_200_OK)
+ 
     # In real life you'd call the selected LLM here.
         return Response({"error": "No item selected"}, status=status.HTTP_400_BAD_REQUEST)
     

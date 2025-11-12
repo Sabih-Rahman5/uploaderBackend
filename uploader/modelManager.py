@@ -1,8 +1,9 @@
 # from .DeepSeek import DeepSeek
-from .Llama import loadModel
+# from .Llama import loadModel
+import Llama
 # from .Gemma import Gemma
 from threading import Lock  
-# import torch
+import torch
 
 from pypdf import PdfReader
 from fpdf import FPDF
@@ -34,15 +35,15 @@ class GPUModelManager:
             self._currentState = "loading"
             self._modelName = modelname
             
-            if(modelname == "DeepSeek-r1"):
-                self.model = DeepSeek.loadModel(self.knowledge_base)
-                self._currentState = "loaded"                
-            if(modelname == "Gemma-3"):
-                self.model = Gemma.loadModel(self.knowledge_base)
-                self._currentState = "loaded"
+            # if(modelname == "DeepSeek-r1"):
+            #     self.model = DeepSeek.loadModel(self.knowledge_base)
+            #     self._currentState = "loaded"                
+            # if(modelname == "Gemma-3"):
+            #     self.model = Gemma.loadModel(self.knowledge_base)
+            #     self._currentState = "loaded"
                 
             if(modelname == "Llama-3.2"):
-                self.model = Llama.loadModel(self.knowledge_base)
+                self.model = Llama.loadModel()
                 self._currentState = "loaded"
         
         def clearGpu(self):

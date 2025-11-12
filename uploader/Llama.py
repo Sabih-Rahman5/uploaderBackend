@@ -16,6 +16,9 @@
 
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 
+
+
+
 critic_prompt = """<INSTRUCTION>
 You are a strict answer critic. Your *sole task* is to identify statements in the <ANSWER> that are *factually contradicted* by the <CONTEXT>.
 
@@ -117,66 +120,59 @@ Final accuracy score: <percentage>%
 <RESPONSE>
 """
 
-def loadModel(knowledge_base=None):
+def loadModel():
     model_name = "meta-llama/Llama-3.2-3B-Instruct"
     model = AutoModelForCausalLM.from_pretrained(model_name, device_map="auto", torch_dtype="auto")
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     
-    # Pipeline for text generation
-    text_generation_pipeline = pipeline(
-        model=model,
+    llama_pipe = pipeline(
+    model=model,
         tokenizer=tokenizer,
         task="text-generation",
-        temperature=0.2,
         do_sample=True,
         repetition_penalty=1.1,
         return_full_text=False,
-        max_new_tokens=500,
+        max_new_tokens=200,
+        temperature=0.5,
+        top_p=0.5
     )
+    # if(knowledge_base != None):
+    #     loader = PyPDFLoader(knowledge_base)
+    #     docs = loader.load()
 
-    llm_pipeline = HuggingFacePipeline(pipeline=text_generation_pipeline)
-
-    # Prompt template to match desired output format
-
-
-    
-    if(knowledge_base != None):
-        loader = PyPDFLoader(knowledge_base)
-        docs = loader.load()
-
-        prompt_template = """
-        You are an AI teaching assistant. Use the following context, question and student answer to provide grading and constructive feedback. 
-        Ensure that the feedback includes suggestions for improvement and accuracy.
-        {context}
-        Question: {question}
-        """
-        prompt = PromptTemplate(
-        input_variables=["context", "question"],
-        template=prompt_template,)
+    #     prompt_template = """
+    #     You are an AI teaching assistant. Use the following context, question and student answer to provide grading and constructive feedback. 
+    #     Ensure that the feedback includes suggestions for improvement and accuracy.
+    #     {context}
+    #     Question: {question}
+    #     """
+    #     prompt = PromptTemplate(
+    #     input_variables=["context", "question"],
+    #     template=prompt_template,)
         
-        llm_chain = prompt | llm_pipeline | StrOutputParser()
+    #     llm_chain = prompt | llm_pipeline | StrOutputParser()
 
-        splitter = RecursiveCharacterTextSplitter(chunk_size=512, chunk_overlap=30)
-        chunked_docs = splitter.split_documents(docs)
+    #     splitter = RecursiveCharacterTextSplitter(chunk_size=512, chunk_overlap=30)
+    #     chunked_docs = splitter.split_documents(docs)
 
-        db = FAISS.from_documents(chunked_docs, HuggingFaceEmbeddings(model_name='BAAI/bge-base-en-v1.5'))
-        retriever = db.as_retriever(search_type="similarity", search_kwargs={'k': 3})
+    #     db = FAISS.from_documents(chunked_docs, HuggingFaceEmbeddings(model_name='BAAI/bge-base-en-v1.5'))
+    #     retriever = db.as_retriever(search_type="similarity", search_kwargs={'k': 3})
 
-        pipeline = (
-            {"context": retriever, "question": RunnablePassthrough()}
-            | llm_chain
-            )
-    else:
-        prompt_template = """
-        You are an AI teaching assistant. Use the following question and student answer to provide grading and constructive feedback. 
-        Ensure that the feedback includes suggestions for improvement and accuracy.
-        Question: {question}
-        """
-        prompt = PromptTemplate( input_variables=["question"], template=prompt_template,)
+    #     pipeline = (
+    #         {"context": retriever, "question": RunnablePassthrough()}
+    #         | llm_chain
+    #         )
+    # else:
+    #     prompt_template = """
+    #     You are an AI teaching assistant. Use the following question and student answer to provide grading and constructive feedback. 
+    #     Ensure that the feedback includes suggestions for improvement and accuracy.
+    #     Question: {question}
+    #     """
+    #     prompt = PromptTemplate( input_variables=["question"], template=prompt_template,)
         
-        llm_chain = prompt | llm_pipeline | StrOutputParser()
+    #     llm_chain = prompt | llm_pipeline | StrOutputParser()
         
-        pipeline = ( {"question": RunnablePassthrough()} | llm_chain)
+    #     pipeline = ( {"question": RunnablePassthrough()} | llm_chain)
 
 
-    return pipeline
+    return llama_pipe
