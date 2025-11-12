@@ -70,7 +70,6 @@ class RunModel(APIView):
         if model_name:
             print(f"RunModel called with: {model_name}")
             modelManager = GPUModelManager.getInstance()
-            # Simulate a long-running task
             modelManager.loadModel(model_name)
             # for i in range(10):  # Simulate a task with 10 steps
             #     time.sleep(1)  # Simulate model loading time
