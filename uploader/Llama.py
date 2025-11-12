@@ -16,9 +16,6 @@
 
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 
-
-
-
 critic_prompt = """<INSTRUCTION>
 You are a strict answer critic. Your *sole task* is to identify statements in the <ANSWER> that are *factually contradicted* by the <CONTEXT>.
 
