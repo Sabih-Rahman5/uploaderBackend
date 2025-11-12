@@ -1,5 +1,5 @@
 # from .DeepSeek import DeepSeek
-from .Llama import loadModel
+from .Llama import LLama
 # from .Gemma import Gemma
 from threading import Lock  
 import torch
@@ -23,6 +23,8 @@ class GPUModelManager:
             self.model = None
             self.knowledge_base = None
             self.assignment = None
+            self.LLamaInstance = LLama()
+            
 
         def getState(self):
             return self._currentState
@@ -42,7 +44,7 @@ class GPUModelManager:
             #     self._currentState = "loaded"
                 
             if(modelname == "Llama-3.2"):
-                self.model = Llama.loadModel()
+                self.model = self.LLamaInstance.loadModel()
                 self._currentState = "loaded"
         
         def clearGpu(self):

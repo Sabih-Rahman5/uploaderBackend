@@ -120,59 +120,27 @@ Final accuracy score: <percentage>%
 <RESPONSE>
 """
 
-def loadModel():
-    model_name = "meta-llama/Llama-3.2-3B-Instruct"
-    model = AutoModelForCausalLM.from_pretrained(model_name, device_map="auto", torch_dtype="auto")
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
+
+class LLama:
     
-    llama_pipe = pipeline(
-    model=model,
-        tokenizer=tokenizer,
-        task="text-generation",
-        do_sample=True,
-        repetition_penalty=1.1,
-        return_full_text=False,
-        max_new_tokens=200,
-        temperature=0.5,
-        top_p=0.5
-    )
-    # if(knowledge_base != None):
-    #     loader = PyPDFLoader(knowledge_base)
-    #     docs = loader.load()
-
-    #     prompt_template = """
-    #     You are an AI teaching assistant. Use the following context, question and student answer to provide grading and constructive feedback. 
-    #     Ensure that the feedback includes suggestions for improvement and accuracy.
-    #     {context}
-    #     Question: {question}
-    #     """
-    #     prompt = PromptTemplate(
-    #     input_variables=["context", "question"],
-    #     template=prompt_template,)
-        
-    #     llm_chain = prompt | llm_pipeline | StrOutputParser()
-
-    #     splitter = RecursiveCharacterTextSplitter(chunk_size=512, chunk_overlap=30)
-    #     chunked_docs = splitter.split_documents(docs)
-
-    #     db = FAISS.from_documents(chunked_docs, HuggingFaceEmbeddings(model_name='BAAI/bge-base-en-v1.5'))
-    #     retriever = db.as_retriever(search_type="similarity", search_kwargs={'k': 3})
-
-    #     pipeline = (
-    #         {"context": retriever, "question": RunnablePassthrough()}
-    #         | llm_chain
-    #         )
-    # else:
-    #     prompt_template = """
-    #     You are an AI teaching assistant. Use the following question and student answer to provide grading and constructive feedback. 
-    #     Ensure that the feedback includes suggestions for improvement and accuracy.
-    #     Question: {question}
-    #     """
-    #     prompt = PromptTemplate( input_variables=["question"], template=prompt_template,)
-        
-    #     llm_chain = prompt | llm_pipeline | StrOutputParser()
-        
-    #     pipeline = ( {"question": RunnablePassthrough()} | llm_chain)
-
-
-    return llama_pipe
+    def __init__(self):
+        # Initialize model and tokenizer (if needed to be shared across methods)
+        self.model_name = "meta-llama/Llama-3.2-3B-Instruct"
+        self.model = AutoModelForCausalLM.from_pretrained(self.model_name, device_map="auto", torch_dtype="auto")
+        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+    
+    def loadModel(self):
+        llama_pipe = pipeline(
+            model=self.model,
+            tokenizer=self.tokenizer,
+            task="text-generation",
+            do_sample=True,
+            repetition_penalty=1.1,
+            return_full_text=False,
+            max_new_tokens=200,
+            temperature=0.5,
+            top_p=0.5
+        )
+        return llama_pipe
