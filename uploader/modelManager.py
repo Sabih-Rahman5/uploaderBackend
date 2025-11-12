@@ -2,7 +2,7 @@
 from .Llama import loadModel
 # from .Gemma import Gemma
 from threading import Lock  
-import torch
+# import torch
 
 from pypdf import PdfReader
 from fpdf import FPDF
