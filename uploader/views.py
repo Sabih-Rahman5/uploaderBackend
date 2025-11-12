@@ -10,7 +10,7 @@ import PyPDF2
 from django.shortcuts import get_object_or_404
 from .modelManager import GPUModelManager
 import time
-import utils
+# import utils
 
 class UploadAssignment(APIView):
     def post(self, request):
