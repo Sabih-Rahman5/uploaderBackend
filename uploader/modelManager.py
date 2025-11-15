@@ -43,7 +43,14 @@ class GPUModelManager:
                     print("model Already loaded")
                 else:
                     self._currentState = "unloading"
+                    print("loading")
                     self.model.clear_gpu()
+                    del self.model
+                    self.model = None
+                    torch.cuda.empty_cache()
+                    torch.cuda.ipc_collect()
+                    torch.cuda.reset_peak_memory_stats()
+                    torch.cuda.synchronize()
             
             self._currentState = "loading"
             model_class = self.model_registry[modelName]

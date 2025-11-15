@@ -9,11 +9,18 @@ class BaseModel:
         """
         if hasattr(self, 'model'):
             del self.model
+            self.model = None
+
         if hasattr(self, 'tokenizer'):
             del self.tokenizer
+            self.tokenizer = None
+
         
         # Empty cache to release unused memory
         torch.cuda.empty_cache()
+        torch.cuda.ipc_collect()
+        torch.cuda.reset_peak_memory_stats()
+        torch.cuda.synchronize()
         print(f"GPU memory cleared for {self.__class__.__name__} model.")
         
         
