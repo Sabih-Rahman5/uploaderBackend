@@ -16,8 +16,7 @@
 
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 
-
-
+from .BaseModel import BaseModel
 
 critic_prompt = """<INSTRUCTION>
 You are a strict answer critic. Your *sole task* is to identify statements in the <ANSWER> that are *factually contradicted* by the <CONTEXT>.
@@ -120,11 +119,7 @@ Final accuracy score: <percentage>%
 <RESPONSE>
 """
 
-
-from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
-
-class LLama:
-    
+class LLama(BaseModel):
     def __init__(self):
         # Initialize model and tokenizer (if needed to be shared across methods)
         self.model_name = "meta-llama/Llama-3.2-3B-Instruct"

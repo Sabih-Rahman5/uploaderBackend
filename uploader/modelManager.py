@@ -23,8 +23,11 @@ class GPUModelManager:
             self.model = None
             self.knowledge_base = None
             self.assignment = None
-            self.LLamaInstance = LLama()
-            
+            self.model_registry = {
+                "Llama-3.2": LLama,
+                # "DeepSeek-r1": DeepSeek,
+                # "Gemma-3": DeepSeek
+                }
 
         def getState(self):
             return self._currentState
@@ -32,34 +35,36 @@ class GPUModelManager:
         def getLoadedModel(self):
             return self._modelName if self._currentState == "loaded" else None
         
-        def loadModel(self, modelname):        
-            self._currentState = "loading"
-            self._modelName = modelname
+        def loadModel(self, modelName):        
+            if modelName not in self.model_registry:
+                raise ValueError(f"Unknown model: {modelName}")
+            if self.model is not None:
+                if self._modelName == modelName:
+                    print("model Already loaded")
+                else:
+                    self._currentState = "unloading"
+                    self.model.clear_gpu()
             
-            # if(modelname == "DeepSeek-r1"):
-            #     self.model = DeepSeek.loadModel(self.knowledge_base)
-            #     self._currentState = "loaded"                
-            # if(modelname == "Gemma-3"):
-            #     self.model = Gemma.loadModel(self.knowledge_base)
-            #     self._currentState = "loaded"
-                
-            if(modelname == "Llama-3.2"):
-                self.model = self.LLamaInstance.loadModel()
-                self._currentState = "loaded"
-        
-        def clearGpu(self):
-            if self._currentState == "loaded":
-                self._currentState = "unloading"
-                print("unloading model: " + str(self._modelName))
-                
-                del self.model
-                self.model = None
+            self._currentState = "loading"
+            model_class = self.model_registry[modelName]
+            self.model = model_class()
+            self.model.load()
+            self._modelName = modelName
 
-                torch.cuda.empty_cache()
-                # torch.cuda.ipc_collect()
-                # torch.cuda.reset_peak_memory_stats()
-                # torch.cuda.synchronize()
-                self._currentState = "empty"
+        
+        # def clearGpu(self):
+        #     if self._currentState == "loaded":
+        #         self._currentState = "unloading"
+        #         # print("unloading model: " + str(self._modelName))
+                
+        #         del self.model
+        #         self.model = None
+
+            #     torch.cuda.empty_cache()
+            #     # torch.cuda.ipc_collect()
+            #     # torch.cuda.reset_peak_memory_stats()
+            #     # torch.cuda.synchronize()
+            #     self._currentState = "empty"
     
         def extract_text_from_pdf(self):
             print(self.assignment)
