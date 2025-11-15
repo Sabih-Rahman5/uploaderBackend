@@ -1,4 +1,4 @@
-# from .DeepSeek import DeepSeek
+from .DeepSeek import DeepSeek
 from .Llama import LLama
 # from .Gemma import Gemma
 from threading import Lock  
