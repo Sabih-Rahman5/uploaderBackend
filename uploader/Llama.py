@@ -127,7 +127,7 @@ class LLama(BaseModel):
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
     
     def loadModel(self):
-        llama_pipe = pipeline(
+        llm_pipe = pipeline(
             model=self.model,
             tokenizer=self.tokenizer,
             task="text-generation",
@@ -138,4 +138,4 @@ class LLama(BaseModel):
             temperature=0.5,
             top_p=0.5
         )
-        return llama_pipe
+        return llm_pipe

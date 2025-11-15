@@ -25,7 +25,7 @@ class GPUModelManager:
             self.assignment = None
             self.model_registry = {
                 "Llama-3.2": LLama,
-                # "DeepSeek-r1": DeepSeek,
+                "DeepSeek-r1": DeepSeek,
                 # "Gemma-3": DeepSeek
                 }
 
