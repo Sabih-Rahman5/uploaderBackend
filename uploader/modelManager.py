@@ -48,7 +48,7 @@ class GPUModelManager:
             self._currentState = "loading"
             model_class = self.model_registry[modelName]
             self.model = model_class()
-            self.model.load()
+            self.model.loadModel()
             self._modelName = modelName
 
         
