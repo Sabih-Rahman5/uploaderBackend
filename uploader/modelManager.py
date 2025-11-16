@@ -44,7 +44,7 @@ class GPUModelManager:
                     return
 
                 self._currentState = "unloading"
-                print("loading")
+                print("unloading")
                 self.model.clear_gpu()
                 del self.model
                 self.model = None
