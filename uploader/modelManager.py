@@ -43,7 +43,7 @@ class GPUModelManager:
                 if self._modelName == modelName:
                     print("model Already loaded")
                     return
-                self.clearGpu()  
+                self.clearGpu()
             self._currentState = "loading"
             model_class = self.model_registry[modelName]
             self.model = model_class()
