@@ -42,16 +42,7 @@ class GPUModelManager:
                 if self._modelName == modelName:
                     print("model Already loaded")
                     return
-
-                self._currentState = "unloading"
-                print("unloading")
-                self.model.clear_gpu()
-                del self.model
-                self.model = None
-                torch.cuda.empty_cache()
-                torch.cuda.ipc_collect()
-                torch.cuda.reset_peak_memory_stats()
-                torch.cuda.synchronize()
+            self.clearGpu()
             
             self._currentState = "loading"
             model_class = self.model_registry[modelName]
@@ -62,19 +53,17 @@ class GPUModelManager:
             
 
         
-        # def clearGpu(self):
-        #     if self._currentState == "loaded":
-        #         self._currentState = "unloading"
-        #         # print("unloading model: " + str(self._modelName))
-                
-        #         del self.model
-        #         self.model = None
-
-            #     torch.cuda.empty_cache()
-            #     # torch.cuda.ipc_collect()
-            #     # torch.cuda.reset_peak_memory_stats()
-            #     # torch.cuda.synchronize()
-            #     self._currentState = "empty"
+        def clearGpu(self):
+            self._currentState = "unloading"
+            print("unloading")
+            self.model.clear_gpu()
+            del self.model
+            self.model = None
+            torch.cuda.empty_cache()
+            torch.cuda.ipc_collect()
+            torch.cuda.reset_peak_memory_stats()
+            torch.cuda.synchronize()
+            self._currentState = "empty"
     
         def extract_text_from_pdf(self):
             print(self.assignment)
