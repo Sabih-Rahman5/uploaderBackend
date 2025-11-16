@@ -129,7 +129,7 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['annually-star-shrew.ngrok-free.app', 'localhost', '127.0.0.1', "http://localhost:5173"]
 
 
 CORS_ALLOWED_ORIGINS = [
