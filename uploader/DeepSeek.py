@@ -119,10 +119,11 @@ Final accuracy score: <percentage>%
 <RESPONSE>
 """
 
-class LLama(BaseModel):
+
+class DeepSeek(BaseModel):
     def __init__(self):
         super().__init__()
-        self.model_name = "meta-llama/Llama-3.2-3B-Instruct"
+        self.model_name = "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B"
     
     def loadModel(self):
         # Prevent re-loading if already loaded
