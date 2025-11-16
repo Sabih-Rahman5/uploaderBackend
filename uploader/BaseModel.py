@@ -1,5 +1,9 @@
+from dataclasses import replace
 import gc
 import torch
+from ddgs import DDGS
+from uploader.utils import criticValidatorEvaluator
+
 
 critic_prompt = """<INSTRUCTION>
 You are a strict answer critic. Your *sole task* is to identify statements in the <ANSWER> that are *factually contradicted* by the <CONTEXT>.
@@ -65,7 +69,6 @@ RULES:
 <RESPONSE>
 """
 
-
 score_prompt = """<INSTRUCTION>
 You are an **AI evaluator providing feedback**. Your *primary task* is to **provide constructive feedback to a student** and then assign a percentage score (0–100%) representing their answer's accuracy, based on the provided lists of <ACCURACIES> and <INACCURACIES>.
 </INSTRUCTION>
@@ -101,6 +104,34 @@ Final accuracy score: <percentage>%
 
 <RESPONSE>
 """
+
+relevance_prompt = """<INSTRUCTION>
+You are a highly-strict relevance-checking AI. Your *sole task* is to determine if the <QUESTION> can be answered *exclusively* using the information found within the <RETRIEVED CONTEXT>.
+
+You must not answer the question or use any external knowledge.
+</INSTRUCTION>
+
+<RULES>
+1.  **If** the <RETRIEVED CONTEXT> contains information that **directly answers** the <QUESTION> (even if it's not a comprehensive, exhaustive answer), you must respond with **true**.
+2.  **If** the <RETRIEVED CONTEXT> is empty, you must respond with **false**.
+3.  **If** the <RETRIEVED CONTEXT> is irrelevant to the <QUESTION>, you must respond with **false**.
+4.  **If** the <RETRIEVED CONTEXT> mentions the topic but *does not contain the specific information* needed to answer the <QUESTION> (e.g., context mentions the heart but not its function), you must respond with **false**.
+5.  Your response must be *only* the word 'true' or 'false' in lowercase, with no other text, explanation, or punctuation.
+</RULES>
+
+<QUESTION>
+{question}
+</QUESTION>
+
+<RETRIEVED CONTEXT>
+{retrieved_context}
+</RETRIEVED CONTEXT>
+
+<RESPONSE>
+"""
+
+
+
 class BaseModel:
     def __init__(self):
         self.model_name = None
@@ -187,22 +218,86 @@ class BaseModel:
         self._print_cuda_stats("after")
         print("GPU clear attempt finished. If memory still shows as used, check for other references or external processes (nvidia-smi).")
 
-
-    def runInference(self, question, answer):
-            # Retrieve context
-        # retrieved_docs = retriever.invoke(question)
-        # print(retrieved_docs)
-        # context = "\n".join([d.page_content for d in retrieved_docs])
-    
+    def isContextRelevant(self, question, context):
+        if self.pipeline is None or self.tokenizer is None:
+            raise ValueError("Model and tokenizer must be loaded before running inference.")
         # Fill prompt
+        prompt = relevance_prompt.format(
+            question=question,
+            retrieved_context=context
+        )
+        
+        output = self.pipeline(prompt, eos_token_id=self.tokenizer.eos_token_id)[0]["generated_text"]
+        if output.strip().lower() == "true":
+            return True
+        else:
+            return False
+
+    def getWebContext(self, query):
+        paragraphs = []
+        with DDGS() as ddgs:
+            results = ddgs.text(query, safesearch="off", max_results=10)
+            for r in results:
+                title = r.get("title", "")
+                snippet = r.get("body", "")   # this is the paragraph-like text
+                url = r.get("href", "")
+        
+                if snippet:
+                    paragraphs.append(snippet)
+
+        # Combine into a single context block
+        context = "\n\n".join(paragraphs)
+        return context
+
+
+    def criticValidatorEvaluator(self, question, answer, context):
         prompt = critic_prompt.format(
             question=question,
-            context="",
-            answer=answer
-        )
-        print(prompt)
-        print("//////////////////////////////////////////////////////////////////////////////////")
-    # Generate evaluation
+            context=context,
+            answer=answer)
+
         output = self.pipeline(prompt, eos_token_id=self.tokenizer.eos_token_id)[0]["generated_text"]
-        print(output)
+        return output
+    
+    def sageValidatorEvaluator(self, question, answer, context):
+        prompt = sage_prompt.format(
+            question=question,
+            context=context,
+            answer=answer)
+        output = self.pipeline(prompt, eos_token_id=self.tokenizer.eos_token_id)[0]["generated_text"]
+        return output
+
+    def sorcerer(self, accuracies, inaccuracies):
+ 
+        # Fill prompt
+        prompt = promptTemplate.format(
+            accuracies=accuracies,
+            inaccuracies=inaccuracies
+        )
+        # print (prompt)
+        output = llama_pipe(prompt, eos_token_id=tokenizer.eos_token_id)[0]["generated_text"]
+        return output
+
+
+    def runInference(self, question, answer, retriever):    
+        if self.pipeline is None or self.tokenizer is None:
+            raise ValueError("Model and tokenizer must be loaded before running inference.")
+        
+        context = ""
+        if retriever is not None:    
+            retrieved_docs = retriever.invoke(question)
+            print(retrieved_docs)
+            context = "\n".join([d.page_content for d in retrieved_docs])
+    
+        if not self.isContextRelevant(question, context):
+            print("Context is not relevant to the question.")
+            context = self.getWebContext(question)
+
+
+        criticResponse = self.criticValidatorEvaluator(question, answer, critic_prompt, model, tokenizer).split("<RESPONSE>", 1)[-1].replace("</RESPONSE>", "")
+        sageResponse = self.sageValidatorEvaluator(question, answer, sage_prompt, model, tokenizer).split("<RESPONSE>", 1)[-1].replace("</RESPONSE>", "")
+        sorcererResponse = self.sorcerer(sageResponse, criticResponse).split("<RESPONSE>", 1)[-1].replace("</RESPONSE>", "")
+
+
+        output = sorcererResponse
         return output

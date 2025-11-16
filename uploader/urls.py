@@ -7,7 +7,7 @@ from .views import UploadAssignment, UploadKnowledgebase, AssignmentList, GetAss
 urlpatterns = [
 path('run-inference', RunInference),
 path('upload-assignment/', UploadAssignment),
-path('upload-knowledgebase/', UploadKnowledgebase.as_view()),
+path('upload-knowledgebase/', UploadKnowledgebase),
 path('assignments/', AssignmentList.as_view()),
 path('assignment/<int:pk>/text/', GetAssignmentText.as_view()),
 path('assignment/<int:pk>/update-text/', UpdateAssignmentText.as_view()),

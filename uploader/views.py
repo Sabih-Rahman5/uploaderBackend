@@ -59,15 +59,37 @@ def RunInference(request):
     
     
 
-
-class UploadKnowledgebase(APIView):
-    def post(self, request):
+@csrf_exempt
+def UploadKnowledgebase(request):
+    if request.method == 'POST':
         file = request.FILES.get('file')
         if not file:
-            return Response({'error': 'No file provided'}, status=status.HTTP_400_BAD_REQUEST)
-        doc = KnowledgebaseDoc.objects.create(file=file)
-        serializer = KnowledgebaseSerializer(doc)
-        return Response(serializer.data)
+            return JsonResponse({"error": "No file uploaded"}, status=400)
+
+        # Ensure folder exists
+        save_dir = os.path.join(settings.MEDIA_ROOT, 'knowledgebase')
+        os.makedirs(save_dir, exist_ok=True)
+
+        # Give the file a unique name
+        filename = f"{uuid.uuid4()}.pdf"
+        filepath = os.path.join(save_dir, filename)
+
+        # Save file manually
+        with open(filepath, "wb+") as dest:
+            for chunk in file.chunks():
+                dest.write(chunk)
+        modelManager = GPUModelManager.getInstance()
+        if not modelManager.setKnowledgebase(filepath):
+            return JsonResponse({"error": "Failed to set knowledgebase"}, status=500)
+        print(filepath)
+
+        return JsonResponse({
+            "id": filename,
+            "url": f"{settings.MEDIA_URL}knowledgebase/{filename}"
+        })
+
+    return JsonResponse({"error": "Invalid request method"}, status=405)
+
 
 
 class AssignmentList(APIView):

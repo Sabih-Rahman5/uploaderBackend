@@ -1,12 +1,18 @@
-from .DeepSeek import DeepSeek
-from .Llama import LLama
-from .Gemma import Gemma
-from threading import Lock  
-import torch
-
-from pypdf import PdfReader
-from fpdf import FPDF
 import re
+from threading import Lock
+
+import torch
+from fpdf import FPDF
+from langchain_community.document_loaders import PyPDFLoader
+from langchain_community.vectorstores import FAISS
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from pypdf import PdfReader
+
+from .DeepSeek import DeepSeek
+from .Gemma import Gemma
+from .Llama import LLama
+
 
 def sanitize_text(text):
     return text.encode('latin-1', errors='replace').decode('latin-1')
@@ -23,7 +29,8 @@ class GPUModelManager:
             self._currentState = "idle" 
             self._progress = 0       
             self._last_error = ""
-            
+            self.retriever = None
+            self.knowledgebasePath = ""
             self.assignmentPath = ""
             self.model_registry = {
                 "Llama-3.2": LLama,
@@ -63,6 +70,25 @@ class GPUModelManager:
 
             self._currentState = "loaded"
             self._progress = 100
+            
+            
+        def setKnowledgebase(self, path):
+            try:
+                self.knowledgebasePath = path
+                loader = PyPDFLoader(path)
+                docs = loader.load()
+                text_splitter = RecursiveCharacterTextSplitter(chunk_size=512, chunk_overlap=50)
+                split_docs = text_splitter.split_documents(docs)
+                embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+                db = FAISS.from_documents(split_docs, embeddings)
+                self.retriever = db.as_retriever(search_kwargs={"k": 1})
+                return True
+            except Exception as e:
+                self._last_error = str(e)
+                print(f"setKnowledgebase error: {e}")
+                self.retriever = None
+            return False
+
             
         def clearGpu(self):
             self._currentState = "unloading"
@@ -146,7 +172,7 @@ class GPUModelManager:
                     pdf.multi_cell(0, 10, sanitize_text(answer))
                     pdf.ln(2)
                     
-                    feedback = self.model.runInference(question, answer)
+                    feedback = self.model.runInference(question, answer, self.retriever)
                     
                     
                     # Add Feedback Heading
@@ -170,6 +196,10 @@ class GPUModelManager:
             # prompt = ""
             # feedback = self.model.invoke(str(prompt))
             # print(feedback)
+
+
+
+
 
     @classmethod
     def getInstance(cls):
