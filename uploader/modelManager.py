@@ -20,8 +20,8 @@ class GPUModelManager:
         def __init__(self):
             self.model = None
             self._modelName = None
-            self._currentState = "idle"   # idle | loading | loaded | error
-            self._progress = 0            # 0..100
+            self._currentState = "idle"   
+            self._progress = 0       
             self._last_error = ""
             self.model_registry = {
                 "Llama-3.2": LLama,
@@ -33,7 +33,7 @@ class GPUModelManager:
             return self._currentState
         
         def getLoadedModel(self):
-            return self._modelName if self._currentState == "loaded" else None
+            return self._modelName if self._currentState == "loaded" else "None"
         
         def loadModel(self, modelName):
             if modelName not in self.model_registry:

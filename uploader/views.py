@@ -64,17 +64,19 @@ class UpdateAssignmentText(APIView):
         return Response({'status': 'ok', 'id': assignment.id})
 
 
-class RunModel(APIView):
+class LoadModel(APIView):
     def post(self, request):
         model_name = request.data.get('selected_model', None)
         if model_name:
             print(f"RunModel called with: {model_name}")
             modelManager = GPUModelManager.getInstance()
-            modelManager.loadModel(model_name)
+            try:
+                modelManager.loadModel(model_name)
+                return Response({"message": "Model loaded successfully!"}, status=status.HTTP_200_OK)
+            except ValueError as e:
+                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-            return Response({"message": "Item printed successfully"}, status=status.HTTP_200_OK)
-
-        return Response({"error": "No item selected"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"error": "No model selected"}, status=status.HTTP_400_BAD_REQUEST)
     
 class ExampleView(APIView):
     def get(self, request):
@@ -86,7 +88,6 @@ class ModelStatus(APIView):
     def get(self, request):
         modelManager = GPUModelManager.getInstance()
         return Response({
-            "state": modelManager._currentState,
-            "progress": modelManager._progress,
-            "model_name": modelManager._modelName
+            "state": modelManager.getState(),
+            "model_name": modelManager.getLoadedModel()
         })
