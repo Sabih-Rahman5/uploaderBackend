@@ -34,6 +34,9 @@ def UploadAssignment(request):
         with open(filepath, "wb+") as dest:
             for chunk in file.chunks():
                 dest.write(chunk)
+        modelManager = GPUModelManager.getInstance()
+        modelManager.assignmentPath = filepath
+        print(filepath)
 
         return JsonResponse({
             "id": filename,

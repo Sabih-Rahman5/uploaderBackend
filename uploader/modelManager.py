@@ -20,9 +20,11 @@ class GPUModelManager:
         def __init__(self):
             self.model = None
             self._modelName = None
-            self._currentState = "idle"   
+            self._currentState = "idle" 
             self._progress = 0       
             self._last_error = ""
+            
+            self.assignmentPath = ""
             self.model_registry = {
                 "Llama-3.2": LLama,
                 "DeepSeek-r1": DeepSeek,
@@ -76,8 +78,8 @@ class GPUModelManager:
             self._currentState = "empty"
     
         def extract_text_from_pdf(self):
-            print(self.assignment)
-            reader = PdfReader(self.assignment)
+            print(self.assignmentPath)
+            reader = PdfReader(self.assignmentPath)
             text = ""
             for page in reader.pages:
                 text += page.extract_text() + "\n"
