@@ -18,12 +18,11 @@ class GPUModelManager:
     
     class _Singleton:
         def __init__(self):
-            self._modelName = ""
-            self._currentState = "empty"
             self.model = None
-            self.knowledge_base = None
-            self.assignment = None
-            # self.pipeline = None
+            self._modelName = None
+            self._currentState = "idle"   # idle | loading | loaded | error
+            self._progress = 0            # 0..100
+            self._last_error = ""
             self.model_registry = {
                 "Llama-3.2": LLama,
                 "DeepSeek-r1": DeepSeek,
@@ -36,22 +35,33 @@ class GPUModelManager:
         def getLoadedModel(self):
             return self._modelName if self._currentState == "loaded" else None
         
-        def loadModel(self, modelName):        
+        def loadModel(self, modelName):
             if modelName not in self.model_registry:
                 raise ValueError(f"Unknown model: {modelName}")
+
+            if self.model is not None and self._modelName == modelName:
+                self._currentState = "loaded"
+                self._progress = 100
+                return
+
             if self.model is not None:
-                if self._modelName == modelName:
-                    print("model Already loaded")
-                    return
+                self._currentState = "clearing"
+                self._progress = 5
                 self.clearGpu()
+                self._progress = 10
+
             self._currentState = "loading"
+            self._progress = 15
             model_class = self.model_registry[modelName]
             self.model = model_class()
+            self._progress = 30
+
             self.model.loadModel()
             self._modelName = modelName
+
             self._currentState = "loaded"
+            self._progress = 100
             
-        
         def clearGpu(self):
             self._currentState = "unloading"
             print("unloading", self._modelName)

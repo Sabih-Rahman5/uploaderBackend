@@ -123,19 +123,26 @@ class LLama(BaseModel):
     def __init__(self):
         super().__init__()
         self.model_name = "meta-llama/Llama-3.2-3B-Instruct"
-    
+        self.pipeline = None
+        self.model = None
+        self.tokenizer = None
+
     def loadModel(self):
-        # Prevent re-loading if already loaded
+        manager = GPUModelManager.getInstance()
         if self.pipeline:
-            print(f"{self.model_name} is already loaded.")
+            manager._progress = 100
+            manager._currentState = "loaded"
             return
 
+        manager._progress = 25
         print(f"Loading {self.model_name} model and tokenizer...")
         self.model = AutoModelForCausalLM.from_pretrained(self.model_name, device_map="auto", torch_dtype="auto")
+        manager._progress = 60
+
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
-        
+        manager._progress = 75
+
         print(f"Creating pipeline for {self.model_name}...")
-        # Create and STORE the pipeline as an attribute
         self.pipeline = pipeline(
             model=self.model,
             tokenizer=self.tokenizer,
@@ -147,4 +154,7 @@ class LLama(BaseModel):
             temperature=0.5,
             top_p=0.5
         )
+        manager._progress = 95
         print(f"{self.model_name} loaded successfully.")
+        manager._progress = 100
+        manager._currentState = "loaded"
