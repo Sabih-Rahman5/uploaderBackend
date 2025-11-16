@@ -41,22 +41,25 @@ class GPUModelManager:
             if self.model is not None:
                 if self._modelName == modelName:
                     print("model Already loaded")
-                else:
-                    self._currentState = "unloading"
-                    print("loading")
-                    self.model.clear_gpu()
-                    del self.model
-                    self.model = None
-                    torch.cuda.empty_cache()
-                    torch.cuda.ipc_collect()
-                    torch.cuda.reset_peak_memory_stats()
-                    torch.cuda.synchronize()
+                    return
+
+                self._currentState = "unloading"
+                print("loading")
+                self.model.clear_gpu()
+                del self.model
+                self.model = None
+                torch.cuda.empty_cache()
+                torch.cuda.ipc_collect()
+                torch.cuda.reset_peak_memory_stats()
+                torch.cuda.synchronize()
             
             self._currentState = "loading"
             model_class = self.model_registry[modelName]
             self.model = model_class()
             self.model.loadModel()
             self._modelName = modelName
+            self._currentState = "loaded"
+            
 
         
         # def clearGpu(self):
