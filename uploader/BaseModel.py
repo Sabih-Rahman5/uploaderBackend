@@ -205,3 +205,4 @@ class BaseModel:
     # Generate evaluation
         output = self.pipeline(prompt, eos_token_id=self.tokenizer.eos_token_id)[0]["generated_text"]
         print(output)
+        return output

@@ -19,7 +19,7 @@ class GPUModelManager:
     class _Singleton:
         def __init__(self):
             self.model = None
-            self._modelName = None
+            self._modelName = "None"
             self._currentState = "idle" 
             self._progress = 0       
             self._last_error = ""
@@ -146,7 +146,7 @@ class GPUModelManager:
                     pdf.multi_cell(0, 10, sanitize_text(answer))
                     pdf.ln(2)
                     
-                    feedback = self.model.invoke(str(question + "\n" + answer))
+                    feedback = self.model.runInference(question, answer)
                     
                     
                     # Add Feedback Heading
