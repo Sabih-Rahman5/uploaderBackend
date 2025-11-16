@@ -1,6 +1,6 @@
 from .DeepSeek import DeepSeek
 from .Llama import LLama
-# from .Gemma import Gemma
+from .Gemma import Gemma
 from threading import Lock  
 import torch
 
@@ -27,7 +27,7 @@ class GPUModelManager:
             self.model_registry = {
                 "Llama-3.2": LLama,
                 "DeepSeek-r1": DeepSeek,
-                # "Gemma-3": DeepSeek
+                "Gemma-3": Gemma
                 }
 
         def getState(self):
