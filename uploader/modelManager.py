@@ -68,8 +68,7 @@ class GPUModelManager:
             self.model.clear_gpu()
             del self.model
             self.model = None
-            # del self.pipeline
-            # self.pipeline = None
+
             torch.cuda.empty_cache()
             torch.cuda.ipc_collect()
             torch.cuda.reset_peak_memory_stats()
