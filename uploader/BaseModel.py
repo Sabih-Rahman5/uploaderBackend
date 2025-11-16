@@ -197,7 +197,7 @@ class BaseModel:
         # Fill prompt
         prompt = critic_prompt.format(
             question=question,
-            # context=context,
+            context="",
             answer=answer
         )
         print(prompt)
