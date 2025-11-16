@@ -15,7 +15,7 @@ from .models import Assignment, KnowledgebaseDoc
 from .serializers import AssignmentSerializer, KnowledgebaseSerializer
 
 
-def upload_assignment(request):
+def UploadAssignment(request):
     if request.method == 'POST':
         file = request.FILES.get('file')
         if not file:
