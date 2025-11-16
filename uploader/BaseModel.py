@@ -294,8 +294,8 @@ class BaseModel:
             context = self.getWebContext(question)
 
 
-        criticResponse = self.criticValidatorEvaluator(question, answer, critic_prompt, model, tokenizer).split("<RESPONSE>", 1)[-1].replace("</RESPONSE>", "")
-        sageResponse = self.sageValidatorEvaluator(question, answer, sage_prompt, model, tokenizer).split("<RESPONSE>", 1)[-1].replace("</RESPONSE>", "")
+        criticResponse = self.criticValidatorEvaluator(question, answer, context).split("<RESPONSE>", 1)[-1].replace("</RESPONSE>", "")
+        sageResponse = self.sageValidatorEvaluator(question, answer, context).split("<RESPONSE>", 1)[-1].replace("</RESPONSE>", "")
         sorcererResponse = self.sorcerer(sageResponse, criticResponse).split("<RESPONSE>", 1)[-1].replace("</RESPONSE>", "")
 
 
