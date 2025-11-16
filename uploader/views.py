@@ -73,11 +73,20 @@ class RunModel(APIView):
             modelManager.loadModel(model_name)
 
             return Response({"message": "Item printed successfully"}, status=status.HTTP_200_OK)
- 
-    # In real life you'd call the selected LLM here.
+
         return Response({"error": "No item selected"}, status=status.HTTP_400_BAD_REQUEST)
     
 class ExampleView(APIView):
     def get(self, request):
         data = {'message': 'Hello from Django!'}
         return Response(data)
+    
+    
+class ModelStatus(APIView):
+    def get(self, request):
+        modelManager = GPUModelManager.getInstance()
+        return Response({
+            "state": modelManager._currentState,
+            "progress": modelManager._progress,
+            "model_name": modelManager._modelName
+        })

@@ -10,4 +10,6 @@ path('assignment/<int:pk>/text/', GetAssignmentText.as_view()),
 path('assignment/<int:pk>/update-text/', UpdateAssignmentText.as_view()),
 path('run-model/', RunModel.as_view()),
 path('example/', ExampleView.as_view(), name='example'),
+path("model-status/", ModelStatus.as_view()),
+
 ]
