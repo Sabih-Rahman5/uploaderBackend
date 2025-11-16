@@ -46,6 +46,22 @@ def UploadAssignment(request):
     return JsonResponse({"error": "Invalid request method"}, status=405)
 
 
+def RunInference(request):
+    modelManager = GPUModelManager.getInstance()
+    if modelManager.getLoadedModel == "None":
+        return JsonResponse({"error": "Select a model!!"}, status=400)
+    if modelManager.assignmentPath == "":
+        return JsonResponse({"error": "No Assignment Uploaded!!"}, status=400)
+    
+    if modelManager.runInference():
+        return Response({'status': 'ok'}, status=200)
+        
+    return Response({"error": "No model selected"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    
+    
+
+
 class UploadKnowledgebase(APIView):
     def post(self, request):
         file = request.FILES.get('file')

@@ -1,10 +1,11 @@
 from django.urls import path
 from django.conf import settings
 from django.conf.urls.static import static
-from .views import UploadAssignment, UploadKnowledgebase, AssignmentList, GetAssignmentText, UpdateAssignmentText, LoadModel, ExampleView, ModelStatus
+from .views import UploadAssignment, UploadKnowledgebase, AssignmentList, GetAssignmentText, UpdateAssignmentText, LoadModel, ExampleView, ModelStatus, RunInference
 
 
 urlpatterns = [
+path('run-inference', RunInference),
 path('upload-assignment/', UploadAssignment),
 path('upload-knowledgebase/', UploadKnowledgebase.as_view()),
 path('assignments/', AssignmentList.as_view()),
