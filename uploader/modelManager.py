@@ -23,7 +23,7 @@ class GPUModelManager:
             self.model = None
             self.knowledge_base = None
             self.assignment = None
-            self.pipeline = None
+            # self.pipeline = None
             self.model_registry = {
                 "Llama-3.2": LLama,
                 "DeepSeek-r1": DeepSeek,
@@ -43,13 +43,11 @@ class GPUModelManager:
                 if self._modelName == modelName:
                     print("model Already loaded")
                     return
-                self.clearGpu()
-                
-            
+                self.clearGpu()  
             self._currentState = "loading"
             model_class = self.model_registry[modelName]
             self.model = model_class()
-            self.pipeline = self.model.loadModel()
+            self.model.loadModel()
             self._modelName = modelName
             self._currentState = "loaded"
             
@@ -60,8 +58,8 @@ class GPUModelManager:
             self.model.clear_gpu()
             del self.model
             self.model = None
-            del self.pipeline
-            self.pipeline = None
+            # del self.pipeline
+            # self.pipeline = None
             torch.cuda.empty_cache()
             torch.cuda.ipc_collect()
             torch.cuda.reset_peak_memory_stats()

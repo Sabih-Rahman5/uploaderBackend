@@ -119,15 +119,24 @@ Final accuracy score: <percentage>%
 <RESPONSE>
 """
 
-class LLama(BaseModel):
+class DeepSeek(BaseModel):
     def __init__(self):
-        # Initialize model and tokenizer (if needed to be shared across methods)
-        self.model_name = "meta-llama/Llama-3.2-3B-Instruct"
-        self.model = AutoModelForCausalLM.from_pretrained(self.model_name, device_map="auto", torch_dtype="auto")
-        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+        super().__init__()
+        self.model_name = "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B"
     
     def loadModel(self):
-        llm_pipe = pipeline(
+        # Prevent re-loading if already loaded
+        if self.pipeline:
+            print(f"{self.model_name} is already loaded.")
+            return
+
+        print(f"Loading {self.model_name} model and tokenizer...")
+        self.model = AutoModelForCausalLM.from_pretrained(self.model_name, device_map="auto", torch_dtype="auto")
+        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+        
+        print(f"Creating pipeline for {self.model_name}...")
+        # Create and STORE the pipeline as an attribute
+        self.pipeline = pipeline(
             model=self.model,
             tokenizer=self.tokenizer,
             task="text-generation",
@@ -138,4 +147,4 @@ class LLama(BaseModel):
             temperature=0.5,
             top_p=0.5
         )
-        return llm_pipe
+        print(f"{self.model_name} loaded successfully.")
