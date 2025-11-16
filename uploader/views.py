@@ -92,26 +92,26 @@ def UploadKnowledgebase(request):
 
 
 
-class AssignmentList(APIView):
-    def get(self, request):
-        qs = Assignment.objects.all().order_by('-uploaded_at')
-        serializer = AssignmentSerializer(qs, many=True)
-        return Response(serializer.data)
+# class AssignmentList(APIView):
+#     def get(self, request):
+#         qs = Assignment.objects.all().order_by('-uploaded_at')
+#         serializer = AssignmentSerializer(qs, many=True)
+#         return Response(serializer.data)
 
 
-class GetAssignmentText(APIView):
-    def get(self, request, pk):
-        assignment = get_object_or_404(Assignment, pk=pk)
-        return Response({'id': assignment.id, 'text': assignment.extracted_text})
+# class GetAssignmentText(APIView):
+#     def get(self, request, pk):
+#         assignment = get_object_or_404(Assignment, pk=pk)
+#         return Response({'id': assignment.id, 'text': assignment.extracted_text})
 
 
-class UpdateAssignmentText(APIView):
-    def post(self, request, pk):
-        assignment = get_object_or_404(Assignment, pk=pk)
-        new_text = request.data.get('text', '')
-        assignment.extracted_text = new_text
-        assignment.save()
-        return Response({'status': 'ok', 'id': assignment.id})
+# class UpdateAssignmentText(APIView):
+#     def post(self, request, pk):
+#         assignment = get_object_or_404(Assignment, pk=pk)
+#         new_text = request.data.get('text', '')
+#         assignment.extracted_text = new_text
+#         assignment.save()
+#         return Response({'status': 'ok', 'id': assignment.id})
 
 
 class LoadModel(APIView):
