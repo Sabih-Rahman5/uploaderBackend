@@ -1,35 +1,45 @@
-from django.shortcuts import render
+import os
+import uuid
 
-# Create your views here.
-from rest_framework.views import APIView
-from rest_framework.response import Response
+from django.conf import settings
+from django.conf.urls.static import static
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, render
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from .modelManager import GPUModelManager
 from .models import Assignment, KnowledgebaseDoc
 from .serializers import AssignmentSerializer, KnowledgebaseSerializer
-import PyPDF2
-from django.shortcuts import get_object_or_404
-from .modelManager import GPUModelManager
-import time
-# import utils
 
-class UploadAssignment(APIView):
-    def post(self, request):
+
+def upload_assignment(request):
+    if request.method == 'POST':
         file = request.FILES.get('file')
         if not file:
-            return Response({'error': 'No file provided'}, status=status.HTTP_400_BAD_REQUEST)
-        assignment = Assignment.objects.create(file=file)
-        # extract text
-        try:
-            reader = PyPDF2.PdfReader(assignment.file)
-            text = []
-            for page in reader.pages:
-                text.append(page.extract_text() or '')
-                assignment.extracted_text = "\n".join(text)
-                assignment.save()
-        except Exception as e:
-            print('PDF extract error:', e)
-        serializer = AssignmentSerializer(assignment)
-        return Response(serializer.data)
+            return JsonResponse({"error": "No file uploaded"}, status=400)
+
+        # Ensure folder exists
+        save_dir = os.path.join(settings.MEDIA_ROOT, 'assignments')
+        os.makedirs(save_dir, exist_ok=True)
+
+        # Give the file a unique name
+        filename = f"{uuid.uuid4()}.pdf"
+        filepath = os.path.join(save_dir, filename)
+
+        # Save file manually
+        with open(filepath, "wb+") as dest:
+            for chunk in file.chunks():
+                dest.write(chunk)
+
+        return JsonResponse({
+            "id": filename,
+            "url": f"{settings.MEDIA_URL}assignments/{filename}"
+        })
+
+    return JsonResponse({"error": "Invalid request method"}, status=405)
 
 
 class UploadKnowledgebase(APIView):
