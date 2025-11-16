@@ -270,12 +270,12 @@ class BaseModel:
     def sorcerer(self, accuracies, inaccuracies):
  
         # Fill prompt
-        prompt = promptTemplate.format(
+        prompt = score_prompt.format(
             accuracies=accuracies,
             inaccuracies=inaccuracies
         )
         # print (prompt)
-        output = llama_pipe(prompt, eos_token_id=tokenizer.eos_token_id)[0]["generated_text"]
+        output = self.pipeline(prompt, eos_token_id=self.tokenizer.eos_token_id)[0]["generated_text"]
         return output
 
 
