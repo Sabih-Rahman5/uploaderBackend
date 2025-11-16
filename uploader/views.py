@@ -15,6 +15,7 @@ from .models import Assignment, KnowledgebaseDoc
 from .serializers import AssignmentSerializer, KnowledgebaseSerializer
 
 
+@csrf_exempt
 def UploadAssignment(request):
     if request.method == 'POST':
         file = request.FILES.get('file')
