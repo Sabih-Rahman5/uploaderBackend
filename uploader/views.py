@@ -3,7 +3,6 @@ import uuid
 
 from django.conf import settings
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
 from rest_framework import status
@@ -11,8 +10,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .modelManager import GPUModelManager
-from .models import Assignment, KnowledgebaseDoc
-from .serializers import AssignmentSerializer, KnowledgebaseSerializer
+# from .models import Assignment, KnowledgebaseDoc
+# from .serializers import AssignmentSerializer, KnowledgebaseSerializer
 
 
 @csrf_exempt
