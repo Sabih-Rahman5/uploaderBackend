@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import UploadAssignment, UploadKnowledgebase, AssignmentList, GetAssignmentText, UpdateAssignmentText, RunModel, ExampleView
+from .views import UploadAssignment, UploadKnowledgebase, AssignmentList, GetAssignmentText, UpdateAssignmentText, RunModel, ExampleView, ModelStatus
 
 
 urlpatterns = [
