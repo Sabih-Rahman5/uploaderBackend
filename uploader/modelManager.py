@@ -188,6 +188,8 @@ class GPUModelManager:
                         progress_callback((i + 1) / total)
                 print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                 pdf.output("output.pdf")
+                print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+                
                 return True
             
             except Exception as e:

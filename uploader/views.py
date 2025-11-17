@@ -52,6 +52,8 @@ def RunInference(request):
         if modelManager.runInference():
             pdf_path = os.path.join(settings.MEDIA_ROOT, 'output.pdf')
             if os.path.exists(pdf_path):
+                print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+
                 file_handle = open(pdf_path, 'rb')
                 response = FileResponse(file_handle, content_type='application/pdf')
                 response['Content-Disposition'] = 'attachment; filename="output.pdf"'
