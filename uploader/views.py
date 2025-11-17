@@ -2,7 +2,7 @@ import os
 import uuid
 
 from django.conf import settings
-from django.http import JsonResponse
+from django.http import JsonResponse, FileResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
 from rest_framework import status
@@ -10,9 +10,6 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .modelManager import GPUModelManager
-# from .models import Assignment, KnowledgebaseDoc
-# from .serializers import AssignmentSerializer, KnowledgebaseSerializer
-
 
 @csrf_exempt
 def UploadAssignment(request):
@@ -52,7 +49,15 @@ def RunInference(request):
     if modelManager.assignmentPath == "":
         return Response({"error": "No Assignment Uploaded!!"}, status=status.HTTP_400_BAD_REQUEST)
     if modelManager.runInference():
-        return Response({'status': 'ok'}, status=status.HTTP_200_OK)
+        pdf_path = os.path.join(os.getcwd(), 'output.pdf')
+        if os.path.exists(pdf_path):
+            # Return the PDF file as a response
+            response = FileResponse(open(pdf_path, 'rb'), content_type='application/pdf')
+            response['Content-Disposition'] = 'attachment; filename="output.pdf"'
+            return response
+        
+        
+        return Response({"error": "PDF generation failed"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     return Response({"error": "No model selected"}, status=status.HTTP_400_BAD_REQUEST)
     
     

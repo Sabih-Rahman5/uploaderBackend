@@ -1,19 +1,3 @@
-# import langchain as lc
-# from langchain import LLMMathChain
-# from langchain.chains import RetrievalQA
-# from langchain_community.document_loaders import PyPDFLoader
-# from langchain_text_splitters import RecursiveCharacterTextSplitter
-# from langchain_huggingface import HuggingFaceEmbeddings
-# from langchain_community.vectorstores import FAISS
-# # from langchain.schema import Document
-# # import torch
-# from transformers import AutoTokenizer, AutoModelForCausalLM
-# from transformers import pipeline as hf_pipeline
-# from langchain.prompts import PromptTemplate
-# from langchain_core.output_parsers import StrOutputParser
-# from langchain_core.runnables import RunnablePassthrough
-# from langchain_huggingface import HuggingFacePipeline
-
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 
 from .BaseModel import BaseModel

@@ -129,8 +129,6 @@ class GPUModelManager:
                     'answer': answer.strip()
                 }
             return qa_dict
-            
-        # Example function to create the PDF
 
         def runInference(self, progress_callback=None):
             try:
