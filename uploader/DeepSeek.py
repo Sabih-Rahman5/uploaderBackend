@@ -1,5 +1,4 @@
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
-
 from .BaseModel import BaseModel
 
 class DeepSeek(BaseModel):

@@ -43,21 +43,25 @@ def UploadAssignment(request):
 
 @api_view(['POST'])
 def RunInference(request):
-    modelManager = GPUModelManager.getInstance()
-    if modelManager.getLoadedModel == "None":
+    modelManager = GPUModelManager.getInstance()    
+    if str(modelManager.getLoadedModel) == "None": 
         return Response({"error": "Select a model!!"}, status=status.HTTP_400_BAD_REQUEST)
     if modelManager.assignmentPath == "":
         return Response({"error": "No Assignment Uploaded!!"}, status=status.HTTP_400_BAD_REQUEST)
-    if modelManager.runInference():
-        pdf_path = os.path.join(settings.MEDIA_ROOT, 'output.pdf')
-        if os.path.exists(pdf_path):
-            response = FileResponse(open(pdf_path, 'rb'), content_type='application/pdf')
-            response['Content-Disposition'] = 'attachment; filename="output.pdf"'
-            return response
-        
-        
-        return Response({"error": "PDF generation failed"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    return Response({"error": "No model selected"}, status=status.HTTP_400_BAD_REQUEST)
+    try:
+        if modelManager.runInference():
+            pdf_path = os.path.join(settings.MEDIA_ROOT, 'output.pdf')
+            if os.path.exists(pdf_path):
+                file_handle = open(pdf_path, 'rb')
+                response = FileResponse(file_handle, content_type='application/pdf')
+                response['Content-Disposition'] = 'attachment; filename="output.pdf"'
+                return response
+            else:
+                return Response({"error": "Inference ran, but PDF was not found"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    except Exception as e:
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    return Response({"error": "PDF generation failed or model error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     
     

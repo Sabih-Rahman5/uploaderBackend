@@ -145,6 +145,8 @@ class GPUModelManager:
                 #     print(f"Answer {number}: {qa['answer']}\n")
                 
                 total = len(qa_pairs)
+                print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+                
                 for i, number in enumerate(sorted(qa_pairs, key=int)):  # assuming keys are numeric strings
                     
                     print(f"Processing Question {number}...")
@@ -184,7 +186,7 @@ class GPUModelManager:
                         
                     if progress_callback is not None:
                         progress_callback((i + 1) / total)
-
+                print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
                 pdf.output("output.pdf")
                 return True
             
