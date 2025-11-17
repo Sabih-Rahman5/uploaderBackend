@@ -50,9 +50,10 @@ def RunInference(request):
         return Response({"error": "No Assignment Uploaded!!"}, status=status.HTTP_400_BAD_REQUEST)
     try:
         if modelManager.runInference():
+            print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
             pdf_path = os.path.join(settings.MEDIA_ROOT, 'output.pdf')
             if os.path.exists(pdf_path):
-                print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+                print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
 
                 file_handle = open(pdf_path, 'rb')
                 response = FileResponse(file_handle, content_type='application/pdf')
