@@ -50,18 +50,37 @@ def RunInference(request):
         return Response({"error": "No Assignment Uploaded!!"}, status=status.HTTP_400_BAD_REQUEST)
     try:
         if modelManager.runInference():
-            print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-            pdf_path = os.path.join(settings.MEDIA_ROOT, 'output.pdf')
-            if os.path.exists(pdf_path):
-                print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+            print("1. Inference finished. Locating file...")
 
+            # --- STRATEGY 1: Check Base Directory (Root of repo) ---
+            # This is where files usually land if you don't specify a path
+            file_name = 'output.pdf'
+            pdf_path = os.path.join(settings.BASE_DIR, file_name)
+
+            # --- STRATEGY 2: Check Media Root (If configured) ---
+            if not os.path.exists(pdf_path):
+                print(f"File not found at {pdf_path}, checking MEDIA_ROOT...")
+                if hasattr(settings, 'MEDIA_ROOT'):
+                    pdf_path = os.path.join(settings.MEDIA_ROOT, file_name)
+
+            print(f"2. Checking existence of: {pdf_path}")
+
+            if os.path.exists(pdf_path):
+                print("3. File found! Sending response.")
+                # Open file in binary mode
                 file_handle = open(pdf_path, 'rb')
+                
                 response = FileResponse(file_handle, content_type='application/pdf')
                 response['Content-Disposition'] = 'attachment; filename="output.pdf"'
                 return response
             else:
-                return Response({"error": "Inference ran, but PDF was not found"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                print(f"CRITICAL ERROR: File not found at {pdf_path}")
+                # This will tell you exactly where it looked
+                return Response({"error": f"PDF generated but not found at {pdf_path}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
     except Exception as e:
+        import traceback
+        traceback.print_exc() # Print the crash details to terminal
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     return Response({"error": "PDF generation failed or model error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
