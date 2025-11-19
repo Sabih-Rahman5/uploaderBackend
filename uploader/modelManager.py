@@ -199,8 +199,6 @@ class GPUModelManager:
                         
                 total_score = sum(scores) / scoreCount if scoreCount > 0 else 0        
                 
-                
-                print(f"Total Accuracy: {total_accuracy:.2f}%")
         
                 # Save the individual scores to a CSV file
                 with open('scores.csv', mode='w', newline='') as file:
@@ -209,7 +207,7 @@ class GPUModelManager:
                     for number, score in zip(sorted(qa_pairs.keys()), scores):
                         writer.writerow([number, score])  # Write each question's score
                         
-                    writer.writerow(['Total Accuracy', f'{total_accuracy:.2f}%'])
+                    writer.writerow(['Total Accuracy', f'{total_score:.2f}%'])
                         
                       
                         
