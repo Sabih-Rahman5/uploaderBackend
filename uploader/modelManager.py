@@ -187,7 +187,10 @@ class GPUModelManager:
                     
                     # Add Feedback Heading
                     pdf.set_font("Arial", "B", 12)
-                    pdf.cell(0, 10, f"Feedback {number}:", ln=True)
+                    if detailed:
+                        pdf.cell(0, 10, f"Results: {number}:", ln=True)
+                    else:
+                        pdf.cell(0, 10, f"Feedback {number}:", ln=True)
                     # Add Feedback Text
                     pdf.set_font("Arial", "", 12)
                     pdf.multi_cell(0, 10, sanitize_text(feedback))

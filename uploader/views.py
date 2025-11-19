@@ -41,55 +41,73 @@ def UploadAssignment(request):
 
     return JsonResponse({"error": "Invalid request method"}, status=405)
 
+
 @api_view(['POST'])
 def RunInference(request):
     
     detailed = request.data.get('detailedOutput', False)
     print(f"RunInference called with detailedOutput={detailed}")
+    
     modelManager = GPUModelManager.getInstance()    
     if str(modelManager.getLoadedModel) == "None": 
         return Response({"error": "Select a model!!"}, status=status.HTTP_400_BAD_REQUEST)
     if modelManager.assignmentPath == "":
         return Response({"error": "No Assignment Uploaded!!"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    # Define file names and paths
+    pdf_name = 'output.pdf'
+    csv_name = 'scores.csv'
+    pdf_path = os.path.join(settings.BASE_DIR, pdf_name)
+    csv_path = os.path.join(settings.BASE_DIR, csv_name)
+
     try:
         if modelManager.runInference(None, detailed=detailed):
-            print("1. Inference finished. Locating file...")
+            print("1. Inference finished. Locating files...")
 
-            # --- STRATEGY 1: Check Base Directory (Root of repo) ---
-            # This is where files usually land if you don't specify a path
-            file_name = 'output.pdf'
-            pdf_path = os.path.join(settings.BASE_DIR, file_name)
+            if not os.path.exists(pdf_path):
+                print(f"CRITICAL ERROR: File not found at {pdf_path}")
+                return Response({"error": f"PDF generated but not found at {pdf_path}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-            # --- STRATEGY 2: Check Media Root (If configured) ---
-            # if not os.path.exists(pdf_path):
-            #     print(f"File not found at {pdf_path}, checking MEDIA_ROOT...")
-            #     if hasattr(settings, 'MEDIA_ROOT'):
-            #         pdf_path = os.path.join(settings.MEDIA_ROOT, file_name)
+            # --- Check the detailed flag to decide the response format ---
 
-            print(f"2. Checking existence of: {pdf_path}")
+            if detailed:
+                # 🚀 DETAILED MODE: Send ZIP containing PDF and CSV
+                print("2. Detailed mode ON. Creating ZIP file.")
+                
+                zip_buffer = io.BytesIO()
 
-            if os.path.exists(pdf_path):
-                print("3. File found! Sending response.")
-                # Open file in binary mode
+                with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+                    # 1. Add PDF (Always present)
+                    zip_file.write(pdf_path, arcname=pdf_name)
+
+                    # 2. Add CSV (If it exists)
+                    if os.path.exists(csv_path):
+                        zip_file.write(csv_path, arcname=csv_name)
+                        print("3. Both PDF and CSV added to zip.")
+                    else:
+                        print("WARNING: CSV file not found. Sending PDF only inside the zip.")
+
+                zip_buffer.seek(0)
+                
+                response = FileResponse(zip_buffer, content_type='application/zip')
+                response['Content-Disposition'] = 'attachment; filename="detailed_results.zip"'
+                return response
+            
+            else:
+                # 📄 BASIC MODE: Send only the PDF
+                print("2. Basic mode OFF. Sending single PDF file.")
+                
                 file_handle = open(pdf_path, 'rb')
                 
                 response = FileResponse(file_handle, content_type='application/pdf')
                 response['Content-Disposition'] = 'attachment; filename="output.pdf"'
                 return response
-            else:
-                print(f"CRITICAL ERROR: File not found at {pdf_path}")
-                # This will tell you exactly where it looked
-                return Response({"error": f"PDF generated but not found at {pdf_path}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     except Exception as e:
         import traceback
-        traceback.print_exc() # Print the crash details to terminal
+        traceback.print_exc()
         return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    return Response({"error": "PDF generation failed or model error"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
-    
-    
 
 @csrf_exempt
 def UploadKnowledgebase(request):

@@ -299,7 +299,7 @@ class BaseModel:
         sorcererResponse = self.sorcerer(sageResponse, criticResponse).split("<RESPONSE>", 1)[-1].replace("</RESPONSE>", "")
 
         if detailed:
-            output = criticResponse + "\n\n" + sageResponse + "\n\n" + sorcererResponse
+            output = "Mistakes:\n" + criticResponse + "\nAccuracies:\n" + sageResponse + "\nFeedback:\n" + sorcererResponse
         else: 
             output = sorcererResponse
         return output
