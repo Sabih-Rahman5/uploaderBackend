@@ -279,7 +279,7 @@ class BaseModel:
         return output
 
 
-    def runInference(self, question, answer, retriever):    
+    def runInference(self, question, answer, retriever, detailed=False):    
         if self.pipeline is None or self.tokenizer is None:
             raise ValueError("Model and tokenizer must be loaded before running inference.")
         
@@ -298,6 +298,8 @@ class BaseModel:
         sageResponse = self.sageValidatorEvaluator(question, answer, context).split("<RESPONSE>", 1)[-1].replace("</RESPONSE>", "")
         sorcererResponse = self.sorcerer(sageResponse, criticResponse).split("<RESPONSE>", 1)[-1].replace("</RESPONSE>", "")
 
-
-        output = sorcererResponse
+        if detailed:
+            output = criticResponse + "\n\n" + sageResponse + "\n\n" + sorcererResponse
+        else: 
+            output = sorcererResponse
         return output

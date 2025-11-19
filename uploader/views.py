@@ -43,13 +43,16 @@ def UploadAssignment(request):
 
 @api_view(['POST'])
 def RunInference(request):
+    
+    detailed = request.data.get('detailedOutput', False)
+    print(f"RunInference called with detailedOutput={detailed}")
     modelManager = GPUModelManager.getInstance()    
     if str(modelManager.getLoadedModel) == "None": 
         return Response({"error": "Select a model!!"}, status=status.HTTP_400_BAD_REQUEST)
     if modelManager.assignmentPath == "":
         return Response({"error": "No Assignment Uploaded!!"}, status=status.HTTP_400_BAD_REQUEST)
     try:
-        if modelManager.runInference():
+        if modelManager.runInference(None, detailed=detailed):
             print("1. Inference finished. Locating file...")
 
             # --- STRATEGY 1: Check Base Directory (Root of repo) ---

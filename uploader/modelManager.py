@@ -1,6 +1,6 @@
 import re
 from threading import Lock
-
+import csv
 import torch
 from fpdf import FPDF
 from langchain_community.document_loaders import PyPDFLoader
@@ -130,7 +130,7 @@ class GPUModelManager:
                 }
             return qa_dict
 
-        def runInference(self, progress_callback=None):
+        def runInference(self, progress_callback=None, detailed=False):
             try:
                 pdf_text = self.extract_text_from_pdf()
                 qa_pairs = self.extract_qa(pdf_text)
@@ -144,9 +144,9 @@ class GPUModelManager:
                 #     print(f"Question {number}: {qa['question']}")
                 #     print(f"Answer {number}: {qa['answer']}\n")
                 
-                total = len(qa_pairs)
-                print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-                
+                total = len(qa_pairs)         
+                scores = []
+                scoreCount = 0
                 for i, number in enumerate(sorted(qa_pairs, key=int)):  # assuming keys are numeric strings
                     
                     print(f"Processing Question {number}...")
@@ -172,8 +172,18 @@ class GPUModelManager:
                     pdf.multi_cell(0, 10, sanitize_text(answer))
                     pdf.ln(2)
                     
-                    feedback = self.model.runInference(question, answer, self.retriever)
+                    feedback = self.model.runInference(question, answer, self.retriever, detailed)
                     
+                    
+                    match = re.search(r'(\d+)%', feedback)
+                    
+                    if match:
+                        score = match.group(1)  # Extracts the number part of the score
+                        print(f"Accuracy score: {score}%")
+                        scores.append(int(score))
+                        scoreCount += 1
+                    else:
+                        print("No score found in the output.")
                     
                     # Add Feedback Heading
                     pdf.set_font("Arial", "B", 12)
@@ -186,9 +196,30 @@ class GPUModelManager:
                         
                     if progress_callback is not None:
                         progress_callback((i + 1) / total)
-                print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+                        
+                total_score = sum(scores) / scoreCount if scoreCount > 0 else 0        
+                
+                
+                print(f"Total Accuracy: {total_accuracy:.2f}%")
+        
+                # Save the individual scores to a CSV file
+                with open('scores.csv', mode='w', newline='') as file:
+                    writer = csv.writer(file)
+                    writer.writerow(['Question Number', 'Accuracy (%)'])  # Header row
+                    for number, score in zip(sorted(qa_pairs.keys()), scores):
+                        writer.writerow([number, score])  # Write each question's score
+                        
+                    writer.writerow(['Total Accuracy', f'{total_accuracy:.2f}%'])
+                        
+                      
+                        
+                
                 pdf.output("output.pdf")
-                print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+                
+                
+                
+                
+                
                 
                 return True
             
