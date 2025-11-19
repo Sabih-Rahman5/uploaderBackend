@@ -1,5 +1,7 @@
 import os
 import uuid
+import io
+import zipfile
 
 from django.conf import settings
 from django.http import JsonResponse, FileResponse
