@@ -61,10 +61,10 @@ def RunInference(request):
             pdf_path = os.path.join(settings.BASE_DIR, file_name)
 
             # --- STRATEGY 2: Check Media Root (If configured) ---
-            if not os.path.exists(pdf_path):
-                print(f"File not found at {pdf_path}, checking MEDIA_ROOT...")
-                if hasattr(settings, 'MEDIA_ROOT'):
-                    pdf_path = os.path.join(settings.MEDIA_ROOT, file_name)
+            # if not os.path.exists(pdf_path):
+            #     print(f"File not found at {pdf_path}, checking MEDIA_ROOT...")
+            #     if hasattr(settings, 'MEDIA_ROOT'):
+            #         pdf_path = os.path.join(settings.MEDIA_ROOT, file_name)
 
             print(f"2. Checking existence of: {pdf_path}")
 

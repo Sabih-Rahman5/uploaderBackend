@@ -199,7 +199,6 @@ class GPUModelManager:
                         
                 total_score = sum(scores) / scoreCount if scoreCount > 0 else 0        
                 
-        
                 # Save the individual scores to a CSV file
                 with open('scores.csv', mode='w', newline='') as file:
                     writer = csv.writer(file)
