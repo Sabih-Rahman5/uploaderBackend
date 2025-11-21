@@ -130,6 +130,28 @@ You must not answer the question or use any external knowledge.
 <RESPONSE>
 """
 
+extraction_prompt = """<INSTRUCTION>
+You are a strict content filter. Your goal is to strip away all irrelevant text from the <RETRIEVED CONTEXT> and return only the specific segments that answer the <QUESTION>.
+</INSTRUCTION>
+
+<RULES>
+1.  Analyze the <RETRIEVED CONTEXT> sentence by sentence.
+2.  Keep only the text that is semantically relevant to the <QUESTION>.
+3.  Discard all introductory text, side topics, or unrelated data found in the context.
+4.  Stitch the relevant segments together into a coherent, readable paragraph.
+5.  Do not summarize; preserve the original meaning and terminology.
+</RULES>
+
+<QUESTION>
+{question}
+</QUESTION>
+
+<RETRIEVED CONTEXT>
+{retrieved_context}
+</RETRIEVED CONTEXT>
+
+<RESPONSE>
+"""
 
 
 class BaseModel:
@@ -233,6 +255,20 @@ class BaseModel:
         else:
             return False
 
+    def extractRelevantContext(self, question, context):
+        if self.pipeline is None or self.tokenizer is None:
+            raise ValueError("Model and tokenizer must be loaded before running inference.")
+        # Fill prompt
+        prompt = relevance_prompt.format(
+            question=question,
+            retrieved_context=context
+        )
+        
+        output = self.pipeline(prompt, eos_token_id=self.tokenizer.eos_token_id)[0]["generated_text"]
+        return output
+
+
+
     def getWebContext(self, query):
         paragraphs = []
         with DDGS() as ddgs:
@@ -278,22 +314,26 @@ class BaseModel:
         output = self.pipeline(prompt, eos_token_id=self.tokenizer.eos_token_id)[0]["generated_text"]
         return output
 
+    def getContext(self, question, retriever):
+        context = ""
+        if retriever is not None:
+            retrieved_docs = retriever.invoke(question)
+            context = "\n".join([d.page_content for d in retrieved_docs])
+            
+        if context.strip() == "" or not self.isContextRelevant(question, context):
+            print("No relevant context retrieved; fetching web context...")
+            context = self.getWebContext(question)
+        else:
+            context = self.extractRelevantContext(question, context)
+        return context
+
+
+
 
     def runInference(self, question, answer, retriever, detailed=False):    
         if self.pipeline is None or self.tokenizer is None:
             raise ValueError("Model and tokenizer must be loaded before running inference.")
-        
-        context = ""
-        if retriever is not None:    
-            retrieved_docs = retriever.invoke(question)
-            print(retrieved_docs)
-            context = "\n".join([d.page_content for d in retrieved_docs])
-    
-        if not self.isContextRelevant(question, context):
-            print("Context is not relevant to the question.")
-            context = self.getWebContext(question)
-
-
+        context = self.getContext(question, retriever)
         criticResponse = self.criticValidatorEvaluator(question, answer, context).split("<RESPONSE>", 1)[-1].replace("</RESPONSE>", "")
         sageResponse = self.sageValidatorEvaluator(question, answer, context).split("<RESPONSE>", 1)[-1].replace("</RESPONSE>", "")
         sorcererResponse = self.sorcerer(sageResponse, criticResponse).split("<RESPONSE>", 1)[-1].replace("</RESPONSE>", "")

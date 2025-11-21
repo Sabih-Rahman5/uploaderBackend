@@ -27,6 +27,7 @@ class GPUModelManager:
             self.model = None
             self._modelName = "None"
             self._currentState = "idle" 
+            self.retriever = None
             self._progress = 0       
             self._last_error = ""
             self.retriever = None
@@ -73,21 +74,16 @@ class GPUModelManager:
             
             
         def setKnowledgebase(self, path):
-            try:
-                self.knowledgebasePath = path
-                loader = PyPDFLoader(path)
-                docs = loader.load()
-                text_splitter = RecursiveCharacterTextSplitter(chunk_size=512, chunk_overlap=50)
-                split_docs = text_splitter.split_documents(docs)
-                embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-                db = FAISS.from_documents(split_docs, embeddings)
-                self.retriever = db.as_retriever(search_kwargs={"k": 1})
-                return True
-            except Exception as e:
-                self._last_error = str(e)
-                print(f"setKnowledgebase error: {e}")
-                self.retriever = None
-            return False
+            pdf_loader = PyPDFLoader(file_path=path)
+            docs = pdf_loader.load()
+            embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+            text_splitter = RecursiveCharacterTextSplitter(chunk_size=512, chunk_overlap=50)
+            split_docs = text_splitter.split_documents(docs)
+            db = FAISS.from_documents(split_docs, embeddings)
+
+            # Set up a retriever for querying the FAISS index
+            retriever = db.as_retriever(search_kwargs={"k": 1})
+            return retriever
 
             
         def clearGpu(self):
@@ -215,12 +211,6 @@ class GPUModelManager:
                         
                 
                 pdf.output("output.pdf")
-                
-                
-                
-                
-                
-                
                 return True
             
             except Exception as e:
