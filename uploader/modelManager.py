@@ -74,16 +74,23 @@ class GPUModelManager:
             
             
         def setKnowledgebase(self, path):
-            pdf_loader = PyPDFLoader(file_path=path)
-            docs = pdf_loader.load()
-            embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-            text_splitter = RecursiveCharacterTextSplitter(chunk_size=512, chunk_overlap=50)
-            split_docs = text_splitter.split_documents(docs)
-            db = FAISS.from_documents(split_docs, embeddings)
+            try:
+                self.knowledgebasePath = path
+                pdf_loader = PyPDFLoader(file_path=path)
+                docs = pdf_loader.load()
+                embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+                text_splitter = RecursiveCharacterTextSplitter(chunk_size=512, chunk_overlap=50)
+                split_docs = text_splitter.split_documents(docs)
+                db = FAISS.from_documents(split_docs, embeddings)
 
-            # Set up a retriever for querying the FAISS index
-            retriever = db.as_retriever(search_kwargs={"k": 1})
-            return retriever
+                # Set up a retriever for querying the FAISS index
+                retriever = db.as_retriever(search_kwargs={"k": 1})
+                self.retriever = retriever
+                return True
+            except Exception as e:
+                self._last_error = str(e)
+                print(f"Error setting knowledgebase: {e}")
+                return False
 
             
         def clearGpu(self):
