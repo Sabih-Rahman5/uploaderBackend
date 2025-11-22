@@ -7,9 +7,6 @@ from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain.retrievers import ContextualCompressionRetriever
-from langchain.retrievers.document_compressors import CrossEncoderReranker
-from langchain_community.cross_encoders import HuggingFaceCrossEncoder
 from pypdf import PdfReader
 
 from .DeepSeek import DeepSeek
@@ -93,29 +90,37 @@ class GPUModelManager:
                 # 2. Better Embeddings (Optional but recommended)
                 # 'all-mpnet-base-v2' is slightly slower but much more accurate than 'all-MiniLM-L6-v2'
                 embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-mpnet-base-v2")
-            # 1. Same Split and DB setup as before
-                text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+                
+                # 3. Improved Chunking Strategy
+                # Increased size to ~1000 chars (approx 250 tokens) to keep paragraphs together
+                # Increased overlap to 200 chars to ensure context flows between chunks
+                text_splitter = RecursiveCharacterTextSplitter(
+                    chunk_size=1000, 
+                    chunk_overlap=200,
+                    separators=["\n\n", "\n", ".", " ", ""] # Prioritize keeping paragraphs whole
+                )
+                
                 split_docs = text_splitter.split_documents(docs)
+                
+                # 4. Vector Store
                 db = FAISS.from_documents(split_docs, embeddings)
 
-                # 2. Base Retriever (Fetch MORE docs here, e.g., k=20)
-                base_retriever = db.as_retriever(search_kwargs={"k": 20})
-
-                # 3. Define the Reranker Model
-                # 'ms-marco-MiniLM-L-6-v2' is specifically trained to grade Q&A relevance
-                model = HuggingFaceCrossEncoder(model_name="cross-encoder/ms-marco-MiniLM-L-6-v2")
-
-                # 4. Wrap the base retriever with the compressor
-                compressor = CrossEncoderReranker(model=model, top_n=5) # Return top 5 ONLY after grading
-                
-                compression_retriever = ContextualCompressionRetriever(
-                    base_compressor=compressor, 
-                    base_retriever=base_retriever
+                # 5. Advanced Retrieval Configuration
+                # k=5: We retrieve top 5 chunks to give the LLM enough context to synthesize an answer.
+                # search_type="mmr": Maximal Marginal Relevance. This selects the top result, 
+                # then looks for other results that are relevant but diverse, avoiding 5 identical duplicate chunks.
+                retriever = db.as_retriever(
+                    search_type="mmr", 
+                    search_kwargs={
+                        "k": 5, 
+                        "fetch_k": 20,  # Fetch 20 candidates, select top 5 diverse ones
+                        "lambda_mult": 0.7 # Diversity score (closer to 1 is strictly relevance, closer to 0 is max diversity)
+                    }
                 )
-
-                self.retriever = compression_retriever
+                
+                self.retriever = retriever
                 return True
-                            
+                
             except Exception as e:
                 self._last_error = str(e)
                 print(f"Error setting knowledgebase: {e}")
