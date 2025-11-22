@@ -26,6 +26,7 @@ class GPUModelManager:
         def __init__(self):
             self.model = None
             self._modelName = "None"
+            self.strictMode = False 
             self._currentState = "idle" 
             self.retriever = None
             self._progress = 0       
@@ -75,6 +76,10 @@ class GPUModelManager:
             
         def setKnowledgebase(self, path):
             try:
+                if self.retriever is not None:
+                    del self.retriever
+                    self.retriever = None
+                
                 self.knowledgebasePath = path
                 pdf_loader = PyPDFLoader(file_path=path)
                 docs = pdf_loader.load()
@@ -133,7 +138,7 @@ class GPUModelManager:
                 }
             return qa_dict
 
-        def runInference(self, progress_callback=None, detailed=False):
+        def runInference(self, progress_callback=None, detailed=False, self.strictMode):
             try:
                 pdf_text = self.extract_text_from_pdf()
                 qa_pairs = self.extract_qa(pdf_text)

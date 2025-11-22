@@ -48,7 +48,9 @@ def UploadAssignment(request):
 def RunInference(request):
     
     detailed = request.data.get('detailedOutput', False)
+    strictMode = request.data.get('strictMode', False)
     print(f"RunInference called with detailedOutput={detailed}")
+    print(f"RunInference called with strictMode={strictMode}")
     
     modelManager = GPUModelManager.getInstance()    
     if str(modelManager.getLoadedModel) == "None": 
@@ -63,7 +65,7 @@ def RunInference(request):
     csv_path = os.path.join(settings.BASE_DIR, csv_name)
 
     try:
-        if modelManager.runInference(None, detailed=detailed):
+        if modelManager.runInference(None, detailed=detailed, strictMode=strictMode):
             print("1. Inference finished. Locating files...")
 
             if not os.path.exists(pdf_path):
@@ -131,6 +133,10 @@ def UploadKnowledgebase(request):
             for chunk in file.chunks():
                 dest.write(chunk)
         modelManager = GPUModelManager.getInstance()
+        
+        if modelManager.knowledgebasePath == filepath:
+            print(f"Knowledgebase already set to {filepath}")
+        
         if not modelManager.setKnowledgebase(filepath):
             return JsonResponse({"error": "Failed to set knowledgebase"}, status=500)
         print(filepath)

@@ -5,7 +5,71 @@ from ddgs import DDGS
 from uploader.utils import criticValidatorEvaluator
 
 
+
+sage_prompt = """<INSTRUCTION>
+You are a general knowledge verifier. Your *sole task* is to identify statements in the <ANSWER> that are **factually supported**, drawing primarily from the <CONTEXT> and secondarily from your general knowledge.
+
+RULES:
+- **Primary Reference:** Use the <CONTEXT> as the main source of evidence.
+- **Secondary Knowledge:** Use your general knowledge to support statements that are factually correct, *even if* they are not explicitly mentioned in the <CONTEXT>.
+- A "supported" statement is one that is explicitly confirmed in the <CONTEXT>, is logically equivalent to information in the <CONTEXT>, or is established as a known fact via your general knowledge.
+- Respond ONLY with a numbered list of the correct statements from the <ANSWER>.
+- Do NOT include commentary, speculation, or missing details.
+- If no factually correct statements are found, reply exactly: "None"
+</INSTRUCTION>
+
+<QUESTION>
+{question}
+</QUESTION>
+
+<CONTEXT>
+{context}
+</CONTEXT>
+
+<ANSWER>
+{answer}
+</ANSWER>
+
+<RESPONSE FORMAT>
+1. <The statement from the answer that is factually supported>
+</RESPONSE FORMAT>
+
+<RESPONSE>
+"""
+
 critic_prompt = """<INSTRUCTION>
+You are a fact-checking challenger. Your *sole task* is to identify statements in the <ANSWER> that are **factually contradicted**, drawing primarily from the <CONTEXT> and secondarily from your general knowledge.
+
+RULES:
+- **Primary Contradiction Source:** If the <CONTEXT> explicitly proves a statement false, that is the strongest type of contradiction.
+- **Secondary Contradiction Source:** Use your general knowledge to identify statements that are factually incorrect, even if the <CONTEXT> does not mention the correct information.
+- A "contradiction" is when the <ANSWER> states something that is proven false by the <CONTEXT> or is demonstrably false according to general knowledge.
+- Respond ONLY with a numbered list of the contradictions.
+- Do NOT add any preamble or commentary.
+- If no contradictions are found, reply exactly: "None"
+</INSTRUCTION>
+
+<QUESTION>
+{question}
+</QUESTION>
+
+<CONTEXT>
+{context}
+</CONTEXT>
+
+<ANSWER>
+{answer}
+</ANSWER>
+
+<RESPONSE FORMAT>
+1. <The reason the answer is factually contradicted (cite Context or General Knowledge)>
+</RESPONSE FORMAT>
+
+<RESPONSE>
+"""
+
+
+critic_strict_prompt = """<INSTRUCTION>
 You are a strict answer critic. Your *sole task* is to identify statements in the <ANSWER> that are *factually contradicted* by the <CONTEXT>.
 
 RULES:
@@ -37,7 +101,7 @@ RULES:
 <RESPONSE>
 """
 
-sage_prompt = """<INSTRUCTION>
+sage_strict_prompt = """<INSTRUCTION>
 You are a strict answer verifier. Your *sole task* is to identify statements in the <ANSWER> that are *factually supported* by the <CONTEXT>.
 
 RULES:
@@ -286,20 +350,36 @@ class BaseModel:
         return context
 
 
-    def criticValidatorEvaluator(self, question, answer, context):
-        prompt = critic_prompt.format(
-            question=question,
-            context=context,
-            answer=answer)
+    def criticValidatorEvaluator(self, question, answer, context, strictMode = False):
+        
+        if strictMode:
+            prompt = critic_strict_prompt.format(
+                question=question,
+                context=context,
+                answer=answer)
+        else:
+        
+            prompt = critic_prompt.format(
+                question=question,
+                context=context,
+                answer=answer)
+
 
         output = self.pipeline(prompt, eos_token_id=self.tokenizer.eos_token_id)[0]["generated_text"]
         return output
     
-    def sageValidatorEvaluator(self, question, answer, context):
-        prompt = sage_prompt.format(
-            question=question,
-            context=context,
-            answer=answer)
+    def sageValidatorEvaluator(self, question, answer, context, strictMode = False):
+        
+        if strictMode:
+            prompt = sage_strict_prompt.format(
+                question=question,
+                context=context,
+                answer=answer)
+        else:     
+            prompt = sage_prompt.format(
+                question=question,
+                context=context,
+                answer=answer)
         output = self.pipeline(prompt, eos_token_id=self.tokenizer.eos_token_id)[0]["generated_text"]
         return output
 
@@ -330,12 +410,13 @@ class BaseModel:
 
 
 
-    def runInference(self, question, answer, retriever, detailed=False):    
+    def runInference(self, question, answer, retriever, detailed=False, strictMode = False):    
         if self.pipeline is None or self.tokenizer is None:
             raise ValueError("Model and tokenizer must be loaded before running inference.")
         context = self.getContext(question, retriever)
-        criticResponse = self.criticValidatorEvaluator(question, answer, context).split("<RESPONSE>", 1)[-1].replace("</RESPONSE>", "")
-        sageResponse = self.sageValidatorEvaluator(question, answer, context).split("<RESPONSE>", 1)[-1].replace("</RESPONSE>", "")
+        
+        criticResponse = self.criticValidatorEvaluator(question, answer, context, strictMode).split("<RESPONSE>", 1)[-1].replace("</RESPONSE>", "")
+        sageResponse = self.sageValidatorEvaluator(question, answer, context, strictMode).split("<RESPONSE>", 1)[-1].replace("</RESPONSE>", "")
         sorcererResponse = self.sorcerer(sageResponse, criticResponse).split("<RESPONSE>", 1)[-1].replace("</RESPONSE>", "")
 
         if detailed:
