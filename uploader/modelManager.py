@@ -26,7 +26,7 @@ class GPUModelManager:
         def __init__(self):
             self.model = None
             self._modelName = "None"
-            self.strictMode = False 
+            #self.strictMode = False 
             self._currentState = "idle" 
             self.retriever = None
             self._progress = 0       
@@ -138,7 +138,7 @@ class GPUModelManager:
                 }
             return qa_dict
 
-        def runInference(self, progress_callback=None, detailed=False, self.strictMode):
+        def runInference(self, progress_callback=None, detailed=False, strictMode=False):
             try:
                 pdf_text = self.extract_text_from_pdf()
                 qa_pairs = self.extract_qa(pdf_text)
