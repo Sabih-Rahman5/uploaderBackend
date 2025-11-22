@@ -143,95 +143,115 @@ class GPUModelManager:
             try:
                 pdf_text = self.extract_text_from_pdf()
                 qa_pairs = self.extract_qa(pdf_text)
-                
+            
                 pdf = FPDF()
                 pdf.add_page()
+                
+                # --- ROBUST PAGE HANDLING CONFIGURATION ---
+                # 1. Enable automatic page breaks. 
+                # margin=15 leaves 15mm at the bottom.
+                pdf.set_auto_page_break(auto=True, margin=15) 
+                
                 pdf.set_font("Arial", size=12)
                 
-                # for number in sorted(qa_pairs):
-                #     qa = qa_pairs[number]
-                #     print(f"Question {number}: {qa['question']}")
-                #     print(f"Answer {number}: {qa['answer']}\n")
-                
-                total = len(qa_pairs)         
+                # Helper function to check space before adding a new block header
+                # This prevents a header (like "Question 1") from appearing alone at the bottom of a page
+                def check_space_for_header(pdf_obj, required_space=40):
+                    # Get current Y position
+                    current_y = pdf_obj.get_y()
+                    # Get page height (usually 297mm for A4) minus margin
+                    page_height = pdf_obj.h - 20 
+                    
+                    if current_y + required_space > page_height:
+                        pdf_obj.add_page()
+
+                total = len(qa_pairs)        
                 scores = []
                 scoreCount = 0
-                for i, number in enumerate(sorted(qa_pairs, key=int)):  # assuming keys are numeric strings
-                    
+                
+                for i, number in enumerate(sorted(qa_pairs, key=int)):
                     print(f"Processing Question {number}...")
                     
                     qa = qa_pairs[number]
                     question = qa["question"]
                     answer = qa["answer"]
                     
-                    
+                    # --- ENSURE LOGIC ---
+                    # Before starting a new Q/A block, check if we have enough space
+                    # to at least fit the headers and some text.
+                    check_space_for_header(pdf)
+
                     # Add Question Heading
                     pdf.set_font("Arial", "B", 12)
                     pdf.cell(0, 10, f"Question {number}:", ln=True)
+                    
                     # Add Question Text
                     pdf.set_font("Arial", "", 12)
+                    # multi_cell will now automatically page break because of set_auto_page_break above
                     pdf.multi_cell(0, 10, sanitize_text(question))
                     pdf.ln(2)
                     
+                    # Check space before Answer section to keep it somewhat together
+                    check_space_for_header(pdf, required_space=30)
+
                     # Add Answer Heading
                     pdf.set_font("Arial", "B", 12)
                     pdf.cell(0, 10, f"Answer {number}:", ln=True)
+                    
                     # Add Answer Text
                     pdf.set_font("Arial", "", 12)
                     pdf.multi_cell(0, 10, sanitize_text(answer))
                     pdf.ln(2)
                     
+                    # Generate Model Feedback
                     feedback = self.model.runInference(question, answer, self.retriever, detailed)
                     
-                    
+                    # Extract Score
                     match = re.search(r'(\d+)%', feedback)
-                    
                     if match:
-                        score = match.group(1)  # Extracts the number part of the score
+                        score = match.group(1)
                         print(f"Accuracy score: {score}%")
                         scores.append(int(score))
                         scoreCount += 1
                     else:
                         print("No score found in the output.")
                     
+                    # Check space before Feedback section
+                    check_space_for_header(pdf, required_space=30)
+
                     # Add Feedback Heading
                     pdf.set_font("Arial", "B", 12)
                     if detailed:
                         pdf.cell(0, 10, f"Results: {number}:", ln=True)
                     else:
                         pdf.cell(0, 10, f"Feedback {number}:", ln=True)
+                    
                     # Add Feedback Text
                     pdf.set_font("Arial", "", 12)
                     pdf.multi_cell(0, 10, sanitize_text(feedback))
                     pdf.ln(5)  # Add a gap before next question-answer pair
-                        
                         
                     if progress_callback is not None:
                         progress_callback((i + 1) / total)
                         
                 total_score = sum(scores) / scoreCount if scoreCount > 0 else 0        
                 
-                # Save the individual scores to a CSV file
+                # Save CSV
                 with open('scores.csv', mode='w', newline='') as file:
                     writer = csv.writer(file)
-                    writer.writerow(['Question Number', 'Accuracy (%)'])  # Header row
+                    writer.writerow(['Question Number', 'Accuracy (%)'])
                     for number, score in zip(sorted(qa_pairs.keys()), scores):
-                        writer.writerow([number, score])  # Write each question's score
-                        
+                        writer.writerow([number, score])
                     writer.writerow(['Total Accuracy', f'{total_score:.2f}%'])
-                        
-                      
-                        
                 
                 pdf.output("output.pdf")
                 return True
             
             except Exception as e:
                 print(f"Error: {e}")
+                import traceback
+                traceback.print_exc() # Helpful to see where it failed
                 return False
-            # prompt = ""
-            # feedback = self.model.invoke(str(prompt))
-            # print(feedback)
 
 
 
