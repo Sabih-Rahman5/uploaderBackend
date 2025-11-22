@@ -82,17 +82,45 @@ class GPUModelManager:
                     self.retriever = None
                 
                 self.knowledgebasePath = path
+                
+                # 1. Loading
                 pdf_loader = PyPDFLoader(file_path=path)
                 docs = pdf_loader.load()
-                embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-                text_splitter = RecursiveCharacterTextSplitter(chunk_size=512, chunk_overlap=50)
+                
+                # 2. Better Embeddings (Optional but recommended)
+                # 'all-mpnet-base-v2' is slightly slower but much more accurate than 'all-MiniLM-L6-v2'
+                embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-mpnet-base-v2")
+                
+                # 3. Improved Chunking Strategy
+                # Increased size to ~1000 chars (approx 250 tokens) to keep paragraphs together
+                # Increased overlap to 200 chars to ensure context flows between chunks
+                text_splitter = RecursiveCharacterTextSplitter(
+                    chunk_size=1000, 
+                    chunk_overlap=200,
+                    separators=["\n\n", "\n", ".", " ", ""] # Prioritize keeping paragraphs whole
+                )
+                
                 split_docs = text_splitter.split_documents(docs)
+                
+                # 4. Vector Store
                 db = FAISS.from_documents(split_docs, embeddings)
 
-                # Set up a retriever for querying the FAISS index
-                retriever = db.as_retriever(search_kwargs={"k": 1})
+                # 5. Advanced Retrieval Configuration
+                # k=5: We retrieve top 5 chunks to give the LLM enough context to synthesize an answer.
+                # search_type="mmr": Maximal Marginal Relevance. This selects the top result, 
+                # then looks for other results that are relevant but diverse, avoiding 5 identical duplicate chunks.
+                retriever = db.as_retriever(
+                    search_type="mmr", 
+                    search_kwargs={
+                        "k": 5, 
+                        "fetch_k": 20,  # Fetch 20 candidates, select top 5 diverse ones
+                        "lambda_mult": 0.7 # Diversity score (closer to 1 is strictly relevance, closer to 0 is max diversity)
+                    }
+                )
+                
                 self.retriever = retriever
                 return True
+                
             except Exception as e:
                 self._last_error = str(e)
                 print(f"Error setting knowledgebase: {e}")
