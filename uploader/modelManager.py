@@ -77,6 +77,7 @@ class GPUModelManager:
         def setKnowledgebase(self, path):
             try:
                 if self.retriever is not None:
+                    print("Deleting existing retriever")
                     del self.retriever
                     self.retriever = None
                 
