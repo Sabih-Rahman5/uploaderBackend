@@ -414,6 +414,7 @@ class BaseModel:
         if self.pipeline is None or self.tokenizer is None:
             raise ValueError("Model and tokenizer must be loaded before running inference.")
         context = self.getContext(question, retriever)
+        print(context)
         print("running on strict mode:", strictMode)
         criticResponse = self.criticValidatorEvaluator(question, answer, context, strictMode).split("<RESPONSE>", 1)[-1].replace("</RESPONSE>", "")
         sageResponse = self.sageValidatorEvaluator(question, answer, context, strictMode).split("<RESPONSE>", 1)[-1].replace("</RESPONSE>", "")
